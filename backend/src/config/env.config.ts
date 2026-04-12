@@ -33,7 +33,8 @@ export const config = {
 };
 
 // Validate required environment variables
-const requiredEnvVars = [
+export function validateEnv() {
+  const requiredEnvVars = [
   "DATABASE_URL",
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
@@ -42,8 +43,10 @@ const requiredEnvVars = [
   "ACCESS_TOKEN_EXPIRY",
   "REFRESH_TOKEN_EXPIRY",
 ];
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    throw new Error(`Missing required environment variable: ${envVar}`);
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      throw new Error(`Missing required environment variable: ${envVar}`);
+    }
   }
 }
+validateEnv();

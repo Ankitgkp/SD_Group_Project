@@ -4,8 +4,11 @@ import { AuthService } from "../../application/services/AuthService";
 import { useAuth } from "../context/AuthContext";
 import logo from "../../assets/electrify-logo.png";
 import authBg from "../../assets/auth-bg.png";
+import { loginSchema } from "../validation/authSchemas";
 
 const authService = new AuthService();
+
+type LoginErrors = Partial<Record<"identifier" | "password" | "form", string>>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,23 +16,31 @@ export default function LoginPage() {
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    setErrors({});
 
-    const trimmedIdentifier = identifier.trim();
+    const parsed = loginSchema.safeParse({
+      identifier,
+      password,
+    });
 
-    if (!trimmedIdentifier || !password.trim()) {
-      setError("Please enter your email or phone number and password.");
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      setErrors({
+        identifier: fieldErrors.identifier?.[0],
+        password: fieldErrors.password?.[0],
+      });
       return;
     }
 
     setSubmitting(true);
 
     try {
+      const trimmedIdentifier = identifier.trim();
       const isEmail = trimmedIdentifier.includes("@");
 
       const user = await authService.login({
@@ -41,7 +52,9 @@ export default function LoginPage() {
       setUser(user);
       navigate("/home", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setErrors({
+        form: err instanceof Error ? err.message : "Login failed",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -77,36 +90,40 @@ export default function LoginPage() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
-              <div className="relative">
+              <div>
                 <input
                   name="identifier"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="Email or Phone Number"
-                  required
                   autoComplete="username"
                   className="h-11 w-full rounded-2xl border border-slate-400/15 bg-slate-950/95 px-4 text-white outline-none placeholder:text-slate-400 focus:border-blue-400/70 focus:ring-4 focus:ring-blue-500/10"
                 />
+                {errors.identifier && (
+                  <p className="mt-1 text-sm text-red-300">{errors.identifier}</p>
+                )}
               </div>
 
-              <div className="relative">
+              <div>
                 <input
                   name="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type="password"
                   placeholder="Password"
-                  required
                   autoComplete="current-password"
                   className="h-11 w-full rounded-2xl border border-slate-400/15 bg-slate-950/95 px-4 text-white outline-none placeholder:text-slate-400 focus:border-blue-400/70 focus:ring-4 focus:ring-blue-500/10"
                 />
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-300">{errors.password}</p>
+                )}
               </div>
 
-              {error ? (
+              {errors.form && (
                 <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                  {error}
+                  {errors.form}
                 </div>
-              ) : null}
+              )}
 
               <button
                 type="submit"

@@ -40,7 +40,10 @@ export class CloudinaryService {
   };
 
   // Delete from Cloudinary
-  deleteFromCloudinary = async (publicId: string): Promise<void> => {
+  deleteFromCloudinary = async (url: string): Promise<void> => {
+    const urlParts = url.split("/");
+    const fileName = urlParts[urlParts.length - 1];
+    const publicId = fileName.split(".")[0];
     try {
       await cloudinary.uploader.destroy(publicId);
     } catch (error) {

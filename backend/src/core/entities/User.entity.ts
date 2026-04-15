@@ -1,16 +1,16 @@
 export class UserEntity {
   constructor(
-    public readonly id: string,
-    public readonly firstName: string,
-    public readonly lastName: string | null,
-    public readonly phoneNumber: string | null,
+    public readonly user_id: string,
+    public readonly first_name: string,
+    public readonly last_name: string | null,
+    public readonly phone_number: string | null,
     public readonly email: string | null,
     public readonly address: string | null,
-    public readonly govtId: string,
+    public readonly govt_id: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {
-    if (!this.phoneNumber && !this.email) {
+    if (!this.phone_number && !this.email) {
       throw new Error("User must have at least phone number or email");
     }
   }
@@ -20,33 +20,33 @@ export class UserEntity {
   }
 
   public hasPhone(): boolean {
-    return !!this.phoneNumber;
+    return !!this.phone_number;
   }
 
   public getFullName(): string {
-    return `${this.firstName} ${this.lastName ?? ""}`.trim();
+    return `${this.first_name} ${this.last_name ?? ""}`.trim();
   }
 
   public getContactInfo(): object {
     if (this.hasEmail() && this.hasPhone()) {
-      return { email: this.email!, phone: this.phoneNumber! };
+      return { email: this.email!, phone: this.phone_number! };
     } else if (this.hasEmail()) {
       return { email: this.email! };
     } else if (this.hasPhone()) {
-      return { phone: this.phoneNumber! };
+      return { phone: this.phone_number! };
     } else 
         return {};
   }
 
   public toJSON() {
     return {
-      id: this.id,
-      firstName: this.firstName,
-      lastName: this.lastName,
-      phoneNumber: this.phoneNumber,
+      id: this.user_id,
+      first_name: this.first_name,
+      last_name: this.last_name,
+      phone_number: this.phone_number,
       email: this.email,
       address: this.address,
-      govtId: this.govtId,
+      govt_id: this.govt_id,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

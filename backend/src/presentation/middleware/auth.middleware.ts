@@ -18,7 +18,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     const decodedToken = jwt.verify(token, config.jwt.secret) as JwtPayload;
 
     const userRepository = new UserRepository();
-    const user = await userRepository.findById(decodedToken.userId);
+    const user = await userRepository.findById(decodedToken.user_id);
     // console.log("Decoded token:", decodedToken);
     // console.log("Authenticated user:", user);
 

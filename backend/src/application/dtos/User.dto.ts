@@ -1,28 +1,28 @@
 import type {Multer} from 'multer';
 
 export interface RegisterUserdto {
-    firstName: string;
-    lastName?: string;
+    first_name: string;
+    last_name?: string;
     email?: string;
-    phoneNumber?: string;
+    phone_number?: string;
     address?: string;
-    govtId: Express.Multer.File;
+    govt_id: Express.Multer.File;
     password: string;
 }
 
 export interface LoginUserdto {
     email?: string;
-    phoneNumber?: string;
+    phone_number?: string;
     password: string;
 }
 
 export interface UpdateUserdto {
-    firstName?: string;
-    lastName?: string;
+    first_name?: string;
+    last_name?: string;
     email?: string;
-    phoneNumber?: string;
+    phone_number?: string;
     address?: string;
-    govtId?: string;
+    govt_id?: Express.Multer.File;
     password?: string;
     refreshToken?: string;
 }

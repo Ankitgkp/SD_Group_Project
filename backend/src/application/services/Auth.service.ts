@@ -1,8 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { AppError } from "../../shared/error/AppError.js";
-import { UserRepository } from "../../infrastructure/repositories/User.repository.js";
-import type { RegisterUserdto, LoginUserdto } from "../dtos/User.dto.js";
+import type { RegisterUserdto, LoginUserdto, UpdateUserdto } from "../dtos/User.dto.js";
 import type { IUserRepository } from "../../core/interfaces/IUserRepository.js";
 import { RepositoryFactory } from "../../infrastructure/factories/Repository.factory.js";
 import { CloudinaryService } from "../../shared/utils/cloudinary.util.js";
@@ -34,9 +33,9 @@ export class AuthService {
       }
     }
 
-    if (registerUserDto.phoneNumber) {
+    if (registerUserDto.phone_number) {
       const phoneExists = await this.userRepository.findByPhone(
-        registerUserDto.phoneNumber,
+        registerUserDto.phone_number,
       );
       if (phoneExists) {
         throw new AppError("Phone number already in use", 400);
@@ -44,8 +43,8 @@ export class AuthService {
     }
 
     const govtIdURL = await this.cloudinaryService.uploadToCloudinary(
-      registerUserDto.govtId.path,
-      "govtId",
+      registerUserDto.govt_id.path,
+      "govt_id",
     );
 
     const hashedPassword = await bcrypt.hash(
@@ -56,11 +55,11 @@ export class AuthService {
     const newUser = await this.userRepository.create({
       ...registerUserDto,
       password: hashedPassword,
-      govtId: govtIdURL.secure_url,
+      govt_id: govtIdURL.secure_url,
       refreshToken: "", // Placeholder, will be updated after token generation
     });
 
-    const tokens = await this.generateTokens(newUser.id);
+    const tokens = await this.generateTokens(newUser.user_id);
 
     return { user: newUser, tokens };
   }
@@ -70,10 +69,10 @@ export class AuthService {
     refreshToken: string;
   }> {
     try {
-      const accessToken = jwt.sign({ userId }, this.getJwtSecret(), {
+      const accessToken = jwt.sign({ user_id: userId }, this.getJwtSecret(), {
         expiresIn: config.jwt.accessTokenExpiry,
       });
-      const refreshToken = jwt.sign({ userId }, this.getJwtSecret(), {
+      const refreshToken = jwt.sign({ user_id: userId }, this.getJwtSecret(), {
         expiresIn: config.jwt.refreshTokenExpiry,
       });
       const user = await this.userRepository.update(userId, { refreshToken });
@@ -98,14 +97,14 @@ export class AuthService {
     user: UserEntity;
     tokens: { accessToken: string; refreshToken: string };
   }> {
-    const { email, phoneNumber, password } = loginUserDto;
+    const { email, phone_number, password } = loginUserDto;
 
     let result: { user: UserEntity; hashedPassword: string } | null = null;
 
     if (email) {
       result = await this.userRepository.findAuthByEmail(email);
-    } else if (phoneNumber) {
-      result = await this.userRepository.findAuthByPhone(phoneNumber);
+    } else if (phone_number) {
+      result = await this.userRepository.findAuthByPhone(phone_number);
     }
 
     if (!result) {
@@ -118,9 +117,9 @@ export class AuthService {
       throw new AppError("Invalid credentials", 401);
     }
 
-    const tokens = await this.generateTokens(result?.user.id);
+    const tokens = await this.generateTokens(result?.user.user_id);
 
-    const user = await this.userRepository.findById(result!.user.id);
+    const user = await this.userRepository.findById(result!.user.user_id);
 
     if (!user) {
       throw new AppError("User not found after authentication", 404);
@@ -129,17 +128,17 @@ export class AuthService {
   }
 
   async logout(user: UserEntity): Promise<void> {
-    await this.userRepository.update(String(user.id), { refreshToken: "" });
+    await this.userRepository.update(String(user.user_id), { refreshToken: "" });
   }
 
   async changePassword(user: UserEntity, currentPassword: string, newPassword: string): Promise<void> {
-    let userData: { user: UserEntity; hashedPassword: string } | null = null;
+    let userData: { user: UserEntity; hashedPassword: string } | null = 
+      user.hasEmail() 
+        ? await this.userRepository.findAuthByEmail(user.email!) 
+        : user.hasPhone() 
+          ? await this.userRepository.findAuthByPhone(user.phone_number!) 
+          : null;
     // console.log("User:", user);
-    if(user.email) {
-      userData = await this.userRepository.findAuthByEmail(user.email!);
-    } else if(user.phoneNumber) {
-      userData = await this.userRepository.findAuthByPhone(user.phoneNumber!);
-    }
 
     // console.log("User data for password change:", userData);
 
@@ -151,7 +150,7 @@ export class AuthService {
 
     const hashedNewPassword = await bcrypt.hash(newPassword, this.SALT_ROUNDS);
 
-    await this.userRepository.update(userData!.user.id, { password: hashedNewPassword });
+    await this.userRepository.update(userData!.user.user_id, { password: hashedNewPassword });
 
     await this.logout(userData!.user);
   }

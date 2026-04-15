@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { AuthService } from "../../application/services/Auth.service.js";
-import type { RegisterUserdto } from "../../application/dtos/User.dto.js";
+import type { RegisterUserdto, UpdateUserdto } from "../../application/dtos/User.dto.js";
 import { AppError } from "../../shared/error/AppError.js";
 import { AppResponse } from "../../shared/response/AppResponse.js";
 
@@ -16,25 +16,25 @@ export class AuthController {
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    const { firstName, lastName, email, phoneNumber, address, password } =
+    const { first_name, last_name, email, phone_number, address, password } =
       req.body;
-    const govtId = req.file as Express.Multer.File;
-    console.log("Received registration data");
-    if (!email && !phoneNumber) {
+    const govt_id = req.file as Express.Multer.File;
+    // console.log("Received registration data");
+    if (!email && !phone_number) {
       throw new AppError("Either email or phone number must be provided");
-    } else if (!govtId) {
+    } else if (!govt_id) {
       throw new AppError("Government ID is required");
     } else if (!password || password.length < 6) {
       throw new AppError("Password must be at least 6 characters long");
     } else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new AppError("Invalid email format");
-    } else if (phoneNumber && !/^\d{10}$/.test(phoneNumber)) {
+    } else if (phone_number && !/^\d{10}$/.test(phone_number)) {
       throw new AppError("Phone number must be 10 digits");
     } else if (
-      !firstName ||
-      !firstName.trim().length ||
-      firstName.trim().length < 3 ||
-      firstName.trim().length > 50
+      !first_name ||
+      !first_name.trim().length ||
+      first_name.trim().length < 3 ||
+      first_name.trim().length > 50
     ) {
       throw new AppError(
         "First name is required and must be between 3 and 50 characters",
@@ -42,12 +42,12 @@ export class AuthController {
     }
 
     const registerUserDto: RegisterUserdto = {
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email,
-      phoneNumber,
+      phone_number,
       address,
-      govtId,
+      govt_id,
       password,
     };
 
@@ -155,5 +155,4 @@ export class AuthController {
       next(error);
     }
   };
-  
 }

@@ -5,8 +5,8 @@ export interface IUserRepository {
     findById(id: string): Promise<UserEntity | null>;
     delete(id: string): Promise<UserEntity | null>;
     findAll(): Promise<UserEntity[] | null[]>;
-    create(data: Omit<RegisterUserdto, "govtId"> & { govtId: string, refreshToken: string }): Promise<UserEntity>;
-    update(id: string, data: UpdateUserdto): Promise<UserEntity | null>;
+    create(data: Omit<RegisterUserdto, "govt_id"> & { govt_id: string, refreshToken: string }): Promise<UserEntity>;
+    update(id: string, data: Omit<UpdateUserdto, "govt_id"> | { govt_id: string }): Promise<UserEntity | null>;
     findByEmail(email: string): Promise<UserEntity | null>;
     findByPhone(phoneNumber: string): Promise<UserEntity | null>;
     findAuthByEmail(email: string): Promise<{ user: UserEntity; hashedPassword: string; } | null>;

@@ -165,7 +165,16 @@ export default function ProfilePage() {
     setProfileError("");
 
     try {
-      setProfileMessage("Profile update API is not connected yet. UI is ready.");
+      const updatedUser = await authService.updateProfile({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phoneNumber: phoneNumber.trim(),
+        address: address.trim(),
+      });
+
+      setUser(updatedUser);
+      setProfileMessage("Profile updated successfully.");
     } catch (err) {
       setProfileError(
         err instanceof Error ? err.message : "Profile update failed"

@@ -70,11 +70,21 @@ export class AuthService {
   }
 
   async updateProfile(payload: UpdateProfilePayload): Promise<User> {
-    const response = await apiClient.post<ApiResponse<RawUser>>(
-      "/auth/update-profile",
+    const response = await apiClient.patch<ApiResponse<RawUser>>(
+      "/user/update-profile",
       payload
     );
 
     return UserFactory.create(response.data);
+  }
+
+  async uploadGovtId(file: File): Promise<void> {
+    const formData = new FormData();
+    formData.append("govt_id", file);
+
+    await apiClient.patch<ApiResponse<null>>(
+      "/user/upload-govt-id",
+      formData
+    );
   }
 }

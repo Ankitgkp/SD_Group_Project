@@ -22,15 +22,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const authService = new AuthService();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const setUser = (nextUser: User | null) => {
+    setUserState(nextUser);
+  };
 
   const refreshUser = async () => {
     try {
       const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
+      setUserState(currentUser);
     } catch {
-      setUser(null);
+      setUserState(null);
     } finally {
       setLoading(false);
     }
@@ -40,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authService.logout();
     } finally {
-      setUser(null);
+      setUserState(null);
     }
   };
 

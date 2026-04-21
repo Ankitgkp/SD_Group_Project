@@ -11,6 +11,7 @@ export class UserEntity {
     public readonly govt_id: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    public readonly isDeleted: boolean
   ) {
     if (!this.phone_number && !this.email) {
       throw new Error("User must have at least phone number or email");

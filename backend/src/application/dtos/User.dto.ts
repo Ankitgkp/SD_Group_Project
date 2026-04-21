@@ -25,4 +25,5 @@ export interface UpdateUserdto {
     govt_id?: Express.Multer.File;
     password?: string;
     refreshToken?: string;
+    isDeleted?: boolean;
 }

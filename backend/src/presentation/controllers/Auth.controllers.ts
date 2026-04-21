@@ -180,35 +180,92 @@ export class AuthController {
     }
   };
 
-  // refreshTokens = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction,
-  // ): Promise<void> => {
-  //   const incomingToken = req.cookies.refreshToken || req.body.refreshToken;
+  refreshTokens = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    const incomingToken = req.cookies.refreshToken || req.body.refreshToken;
 
-  //   if (!incomingToken) {
-  //     throw new AppError("Unauthorized Request.", 401);
-  //   }
+    if (!incomingToken) {
+      throw new AppError("Unauthorized Request.", 401);
+    }
 
-  //   try {
-  //     const result = await this.authService.refreshTokens(incomingToken);
+    try {
+      const result = await this.authService.refreshTokens(incomingToken);
 
-  //     res
-  //     .status(200)
-  //     .cookie("accessToken", result.tokens.accessToken, { httpOnly: true })
-  //     .cookie("refreshToken", result.tokens.refreshToken, { httpOnly: true })
-  //     .json(
-  //       new AppResponse(
-  //         200,
-  //         {
-  //           user: result.user
-  //         },
-  //         "Tokens Refreshed Successfully"
-  //       )
-  //     )
-  //   } catch (error) {
-  //     next(error)
-  //   }
-  // };
+      res
+      .status(200)
+      .cookie("accessToken", result.tokens.accessToken, { httpOnly: true })
+      .cookie("refreshToken", result.tokens.refreshToken, { httpOnly: true })
+      .json(
+        new AppResponse(
+          200,
+          {
+            user: result.user
+          },
+          "Tokens Refreshed Successfully"
+        )
+      )
+    } catch (error) {
+      next(error)
+    }
+  };
+
+  deactivateAccount = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    const { password } = req.body;
+
+    if (!password) {
+      throw new AppError("Password is required", 400);
+    }
+
+    try {
+      const user = req.user;
+      if (!user) {
+        throw new AppError("Unauthorized", 401);
+      }
+      await this.authService.deactivateAccount(user, password);
+      res
+        .status(200)
+        .clearCookie("accessToken")
+        .clearCookie("refreshToken")
+        .json(new AppResponse(200, null, "Account deactivated successfully"));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  activateAccount = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    const { email, phoneNumber, password } = req.body;
+
+    if (!email?.trim() && !phoneNumber?.trim()) {
+      throw new AppError("Either email or phone number must be provided");
+    } else if (!password || password?.trim().length < 6) {
+      throw new AppError("Password must be at least 6 characters long");
+    }
+
+    try {
+      const result = await this.authService.activateAccount(
+        email,
+        phoneNumber,
+        password,
+      );
+
+      res
+        .status(200)
+        .cookie("accessToken", result.tokens.accessToken, { httpOnly: true })
+        .cookie("refreshToken", result.tokens.refreshToken, { httpOnly: true })
+        .json(new AppResponse(200, result.user, "Account activated successfully"));
+    } catch (error) {
+      next(error);
+    }
+  };
 }

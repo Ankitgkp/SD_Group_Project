@@ -1,7 +1,11 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { AppError } from "../../shared/error/AppError.js";
-import type { RegisterUserdto, LoginUserdto, UpdateUserdto } from "../dtos/User.dto.js";
+import type {
+  RegisterUserdto,
+  LoginUserdto,
+  UpdateUserdto,
+} from "../dtos/User.dto.js";
 import type { IUserRepository } from "../../core/interfaces/IUserRepository.js";
 import { RepositoryFactory } from "../../infrastructure/factories/Repository.factory.js";
 import { CloudinaryService } from "../../shared/utils/cloudinary.util.js";
@@ -128,21 +132,30 @@ export class AuthService {
   }
 
   async logout(user: UserEntity): Promise<void> {
-    await this.userRepository.update(String(user.user_id), { refreshToken: "" });
+    await this.userRepository.update(String(user.user_id), {
+      refreshToken: "",
+    });
   }
 
-  async changePassword(user: UserEntity, currentPassword: string, newPassword: string): Promise<void> {
-    let userData: { user: UserEntity; hashedPassword: string } | null = 
-      user.hasEmail() 
-        ? await this.userRepository.findAuthByEmail(user.email!) 
-        : user.hasPhone() 
-          ? await this.userRepository.findAuthByPhone(user.phone_number!) 
+  async changePassword(
+    user: UserEntity,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    let userData: { user: UserEntity; hashedPassword: string } | null =
+      user.hasEmail()
+        ? await this.userRepository.findAuthByEmail(user.email!)
+        : user.hasPhone()
+          ? await this.userRepository.findAuthByPhone(user.phone_number!)
           : null;
     // console.log("User:", user);
 
     // console.log("User data for password change:", userData);
 
-    const passwordMatch = await bcrypt.compare(currentPassword, userData!.hashedPassword);
+    const passwordMatch = await bcrypt.compare(
+      currentPassword,
+      userData!.hashedPassword,
+    );
 
     if (!passwordMatch) {
       throw new AppError("Invalid credentials", 401);
@@ -150,15 +163,84 @@ export class AuthService {
 
     const hashedNewPassword = await bcrypt.hash(newPassword, this.SALT_ROUNDS);
 
-    await this.userRepository.update(userData!.user.user_id, { password: hashedNewPassword });
+    await this.userRepository.update(userData!.user.user_id, {
+      password: hashedNewPassword,
+    });
 
     await this.logout(userData!.user);
   }
 
-  // async refreshTokens(incomingToken: string): Promise<{
-  //   user: UserEntity;
-  //   tokens: { accessToken: string; refreshToken: string };
-  // }> {
-  //     const decoded = 
-  // }
+  async refreshTokens(incomingToken: string): Promise<{
+    user: UserEntity;
+    tokens: { accessToken: string; refreshToken: string };
+  }> {
+    const decoded = jwt.verify(incomingToken, config.jwt.secret);
+
+    if (typeof decoded === "string" || !decoded?.user_id) {
+      throw new Error("Invalid token structure");
+    }
+
+    const user = await this.userRepository.findById(decoded?.user_id);
+
+    if (!user) {
+      throw new AppError("Invalid Refresh Token", 401);
+    }
+
+    const { accessToken, refreshToken } = await this.generateTokens(user.user_id);
+
+    return {user, tokens: {accessToken, refreshToken}}
+  }
+
+  async deactivateAccount(user: UserEntity, password: string): Promise<void> {
+    let userData: { user: UserEntity; hashedPassword: string } | null =
+      user.hasEmail()
+        ? await this.userRepository.findAuthByEmail(user.email!)
+        : user.hasPhone()
+          ? await this.userRepository.findAuthByPhone(user.phone_number!)
+          : null;
+
+    const passwordMatch = await bcrypt.compare(
+      password,
+      userData!.hashedPassword,
+    );
+
+    if (!passwordMatch) {
+      throw new AppError("Invalid credentials", 401);
+    }
+
+    await this.userRepository.delete(userData!.user.user_id);
+
+    await this.logout(userData!.user);
+  }
+
+  async activateAccount(
+    email: string,
+    phoneNumber: string,
+    password: string,
+  ): Promise<{
+    user: UserEntity;
+    tokens: { accessToken: string; refreshToken: string };
+  }> {
+    const user = email
+      ? await this.userRepository.findByEmail(email)
+      : phoneNumber
+        ? await this.userRepository.findByPhone(phoneNumber)
+        : null;
+
+    if (!user) {
+      throw new AppError("No user with rovided credentials", 404);
+    } else if (!user.isDeleted) {
+      throw new AppError("User is already Active", 400);
+    }
+
+    await this.userRepository.update(user.user_id, { isDeleted: false });
+
+    const result = await this.login({
+      email,
+      phone_number: phoneNumber,
+      password,
+    });
+
+    return result;
+  }
 }

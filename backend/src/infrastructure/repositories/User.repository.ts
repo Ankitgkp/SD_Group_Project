@@ -28,6 +28,7 @@ export class UserRepository implements IUserRepository {
         user.govt_id,
         user.createdAt,
         user.updatedAt,
+        user.isDeleted
       );
     } else {
       return null;
@@ -35,10 +36,13 @@ export class UserRepository implements IUserRepository {
   }
 
   async delete(id: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.delete({
+    const user = await this.prisma.user.update({
       where: {
         user_id: id,
       },
+      data: {
+        isDeleted: true
+      }
     });
     if (user) {
       return new UserEntity(
@@ -51,6 +55,7 @@ export class UserRepository implements IUserRepository {
         user.govt_id,
         user.createdAt,
         user.updatedAt,
+        user.isDeleted
       );
     } else {
       return null;
@@ -70,6 +75,7 @@ export class UserRepository implements IUserRepository {
         user.govt_id,
         user.createdAt,
         user.updatedAt,
+        user.isDeleted
       );
     });
   }
@@ -109,6 +115,7 @@ export class UserRepository implements IUserRepository {
       user.govt_id,
       user.createdAt,
       user.updatedAt,
+      user.isDeleted
     );
   }
 
@@ -143,6 +150,7 @@ export class UserRepository implements IUserRepository {
         user.govt_id,
         user.createdAt,
         user.updatedAt,
+        user.isDeleted
       );
     } else {
       return null;
@@ -166,6 +174,7 @@ export class UserRepository implements IUserRepository {
         user.govt_id,
         user.createdAt,
         user.updatedAt,
+        user.isDeleted
       );
     } else {
       return null;
@@ -189,6 +198,7 @@ export class UserRepository implements IUserRepository {
         user.govt_id,
         user.createdAt,
         user.updatedAt,
+        user.isDeleted
       );
     } else {
       return null;
@@ -215,6 +225,7 @@ export class UserRepository implements IUserRepository {
           user.govt_id,
           user.createdAt,
           user.updatedAt,
+          user.isDeleted
         ),
         hashedPassword: user.password,
       };
@@ -243,6 +254,7 @@ export class UserRepository implements IUserRepository {
           user.govt_id,
           user.createdAt,
           user.updatedAt,
+          user.isDeleted
         ),
         hashedPassword: user.password,
       };
